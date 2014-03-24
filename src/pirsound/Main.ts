@@ -1,4 +1,5 @@
 /// <reference path='../jquery.d.ts'/>
+/// <reference path='path/BezierPath.ts'/>
 
 module pirsound {
 	export class Main {
