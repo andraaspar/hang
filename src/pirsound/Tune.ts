@@ -13,8 +13,9 @@ module pirsound {
 		}
 
 		render(): Array<number> {
-			var result: Array<number> = [];
-			var sampleCount = this.length * this.sampleFrequency;
+			var result: Array<number> = [0];
+			var sampleCount = Math.ceil(this.length * this.sampleFrequency);
+			var sampleTimeDiff = 1 / this.sampleFrequency;
 			var wavePosition = 0;
 			for (var i = 0; i < sampleCount; i++) {
 				var timeRatio = i / (sampleCount - 1);
@@ -22,7 +23,10 @@ module pirsound {
 				var frequency = Tune.FREQUENCY_MIN + this.frequencySource.render(timeRatio) * Tune.FREQUENCY_RANGE;
 				var level = this.levelSource.render(timeRatio);
 				var waveLength = 1 / frequency;
-				result.push(this.wave.render(time));
+				var waveTimeElapsed = sampleTimeDiff / waveLength;
+				wavePosition += waveTimeElapsed;
+				var waveRendered = this.wave.render(wavePosition) * level;
+				result.push(waveRendered);
 			}
 			return result;
 		}
