@@ -1,10 +1,10 @@
 /// <reference path='IWave.ts'/>
 
 module pirsound {
-	export class Tune {
+	export class Sound {
 		static FREQUENCY_MAX = 20000;
 		static FREQUENCY_MIN = 20;
-		static FREQUENCY_RANGE = Tune.FREQUENCY_MAX - Tune.FREQUENCY_MIN;
+		static FREQUENCY_RANGE = Sound.FREQUENCY_MAX - Sound.FREQUENCY_MIN;
 		
 		private sampleFrequency = 44100;
 		
@@ -20,7 +20,7 @@ module pirsound {
 			for (var i = 0; i < sampleCount; i++) {
 				var timeRatio = i / (sampleCount - 1);
 				var time = this.length * timeRatio;
-				var frequency = Tune.FREQUENCY_MIN + this.frequencySource.render(timeRatio) * Tune.FREQUENCY_RANGE;
+				var frequency = Sound.FREQUENCY_MIN + this.frequencySource.render(timeRatio) * Sound.FREQUENCY_RANGE;
 				var level = this.levelSource.render(timeRatio);
 				var waveLength = 1 / frequency;
 				var waveTimeElapsed = sampleTimeDiff / waveLength;
