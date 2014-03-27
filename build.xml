@@ -27,15 +27,6 @@
 		</exec>
 	</target>
 	
-	<target name="minify-js">
-		<java jar="closure-compiler/compiler.jar" fork="true" failonerror="true">
-			<arg value="--js"/>
-			<arg value="build/script/pirsound-1.0.js"/>
-			<arg value="--js_output_file"/>
-			<arg value="build/script/pirsound-1.0.cc.js"/>
-		</java>
-	</target>
-	
 	<target name="compile-less">
 		<java jar="rhino/js.jar" fork="true" errorproperty="n.less-compiler-error" outputproperty="n.less-compiler-out">
 			<arg value="less-compiler/less-rhino-1.5.1.js"/>
