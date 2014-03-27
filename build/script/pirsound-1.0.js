@@ -110,7 +110,9 @@ var pirsound;
                     for (var t = 0; t < steps; t++) {
                         var ratio = t / (steps - 1);
 
-                        var pos = this.calculateBezierPosition([pointA.getOffset(axis), pointA.getHandleOffset(axis, 1 /* END */), pointB.getHandleOffset(axis, 0 /* START */), pointB.getOffset(axis)], t);
+                        var pos = this.calculateBezierPosition([
+                            pointA.getOffset(axis), pointA.getHandleOffset(axis, 1 /* END */),
+                            pointB.getHandleOffset(axis, 0 /* START */), pointB.getOffset(axis)], t);
 
                         if (axis == 0 /* X */) {
                             positionsX.push(pos[0]);
@@ -149,7 +151,6 @@ var pirsound;
     })(pirsound.path || (pirsound.path = {}));
     var path = pirsound.path;
 })(pirsound || (pirsound = {}));
-/// <reference path='../jquery.d.ts'/>
 /// <reference path='path/BezierPath.ts'/>
 var pirsound;
 (function (pirsound) {
@@ -157,10 +158,14 @@ var pirsound;
         function Main() {
         }
         Main.main = function () {
-            jQuery(jQuery.proxy(Main.onDOMLoaded, this));
+            window.addEventListener('load', Main.onDOMLoaded.bind(this));
         };
 
         Main.onDOMLoaded = function () {
+            Main.test1 = document.getElementById('test-1');
+            Main.test1Document = Main.test1.contentDocument;
+            Main.freq1 = Main.test1Document.getElementById('freq-1');
+            console.log(Main.freq1.getAttribute('d'));
         };
         return Main;
     })();
