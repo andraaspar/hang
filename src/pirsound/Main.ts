@@ -1,4 +1,5 @@
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='wave/PathWave.ts'/>
 
 module pirsound {
 	export class Main {
@@ -15,7 +16,13 @@ module pirsound {
 			Main.test1Document = <Document>Main.test1.contentDocument;
 			Main.freq1 = <any>Main.test1Document.getElementById('freq-1');
 			var bezierPath = path.SVGPathConverter.convert(Main.freq1);
-			console.log(bezierPath.linearize(2));
+			console.log(bezierPath);
+			var linearPath = bezierPath.linearize(1);
+			console.log(linearPath);
+			var pw = new wave.PathWave(linearPath);
+			console.log(pw.render(0));
+			console.log(pw.render(.5));
+			console.log(pw.render(.98));
 		}
 	}
 }

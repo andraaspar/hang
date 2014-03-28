@@ -334,7 +334,56 @@ var pirsound;
     })(pirsound.path || (pirsound.path = {}));
     var path = pirsound.path;
 })(pirsound || (pirsound = {}));
+/// <reference path='../path/Path.ts'/>
+/// <reference path='IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (wave) {
+        var PathWave = (function () {
+            function PathWave(path) {
+                this.path = path;
+                this.length = path.getSize(0 /* X */);
+            }
+            PathWave.prototype.render = function (time) {
+                var result = 0;
+                var timeOffset = (time % 1) * this.length;
+                var prevPoint;
+
+                for (var i = 0, n = this.path.getPointCount(); i < n; i++) {
+                    var currentPoint = this.path.getPoint(i);
+                    if (prevPoint) {
+                        if (currentPoint.getOffset(0 /* X */) >= timeOffset) {
+                            result = this.getTimeOffsetY(prevPoint, currentPoint, timeOffset);
+                            break;
+                        }
+                    }
+                    prevPoint = currentPoint;
+                }
+
+                return result;
+            };
+
+            PathWave.prototype.getTimeOffsetY = function (pointA, pointB, timeOffset) {
+                var aX = pointA.getOffset(0 /* X */);
+                var aY = pointA.getOffset(1 /* Y */);
+                var bX = pointB.getOffset(0 /* X */);
+                var bY = pointB.getOffset(1 /* Y */);
+
+                var lengthX = bX - aX;
+                var lengthY = bY - aY;
+
+                var ratio = (timeOffset - aX) / lengthX;
+
+                return aY + lengthY * ratio;
+            };
+            return PathWave;
+        })();
+        wave.PathWave = PathWave;
+    })(pirsound.wave || (pirsound.wave = {}));
+    var wave = pirsound.wave;
+})(pirsound || (pirsound = {}));
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='wave/PathWave.ts'/>
 var pirsound;
 (function (pirsound) {
     var Main = (function () {
@@ -349,7 +398,13 @@ var pirsound;
             Main.test1Document = Main.test1.contentDocument;
             Main.freq1 = Main.test1Document.getElementById('freq-1');
             var bezierPath = pirsound.path.SVGPathConverter.convert(Main.freq1);
-            console.log(bezierPath.linearize(2));
+            console.log(bezierPath);
+            var linearPath = bezierPath.linearize(1);
+            console.log(linearPath);
+            var pw = new pirsound.wave.PathWave(linearPath);
+            console.log(pw.render(0));
+            console.log(pw.render(.5));
+            console.log(pw.render(.98));
         };
         return Main;
     })();
