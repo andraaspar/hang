@@ -1,26 +1,31 @@
+/// <reference path='Path.ts'/>
 /// <reference path='BezierPoint.ts'/>
 
 module pirsound.path {
-	export class BezierPath {
-		constructor(private points: Array<BezierPoint>) {
-
+	export class BezierPath extends Path {
+		constructor(points: Array<BezierPoint>) {
+			super(points);
+		}
+		
+		getPoint(i): BezierPoint {
+			return <BezierPoint>super.getPoint(i);
 		}
 
-		linearize(steps: number): BezierPath {
-			var points: Array<BezierPoint> = [];
+		linearize(steps: number): Path {
+			var newPoints: Array<Point> = [];
 
-			for (var i = 0, n = points.length - 1; i < n; i++) {
-				points.pop();
-				var pointA = points[i];
-				var pointB = points[i + 1];
-				points = points.concat(this.linearizeSegment(pointA, pointB, steps));
+			for (var i = 0, n = newPoints.length - 1; i < n; i++) {
+				newPoints.pop();
+				var pointA = this.getPoint(i);
+				var pointB = this.getPoint(i + 1);
+				newPoints = newPoints.concat(this.linearizeSegment(pointA, pointB, steps));
 			}
 
-			return new BezierPath(points);
+			return new Path(newPoints);
 		}
 
 		linearizeSegment(pointA: BezierPoint, pointB: BezierPoint, steps: number) {
-			var result: Array<BezierPoint> = [];
+			var result: Array<Point> = [];
 			var axes = [geom.Axis.X, geom.Axis.Y];
 			var positionsX: Array<number> = [];
 
@@ -35,7 +40,7 @@ module pirsound.path {
 					if (axis == geom.Axis.X) {
 						positionsX.push(pos[0]);
 					} else {
-						result.push(new BezierPoint(positionsX[t], pos[0]));
+						result.push(new Point(positionsX[t], pos[0]));
 					}
 
 				}

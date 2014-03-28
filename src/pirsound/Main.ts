@@ -1,4 +1,4 @@
-/// <reference path='path/BezierPath.ts'/>
+/// <reference path='path/SVGPathConverter.ts'/>
 
 module pirsound {
 	export class Main {
@@ -14,7 +14,8 @@ module pirsound {
 			Main.test1 = <HTMLObjectElement>document.getElementById('test-1');
 			Main.test1Document = <Document>Main.test1.contentDocument;
 			Main.freq1 = <any>Main.test1Document.getElementById('freq-1');
-			console.log(Main.freq1.getAttribute('d'));
+			var bezierPath = path.SVGPathConverter.convert(Main.freq1);
+			console.log(bezierPath);
 		}
 	}
 }
