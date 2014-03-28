@@ -391,7 +391,7 @@ var pirsound;
                 for (var i = 0; i < sampleCount; i++) {
                     var timeRatio = i / (sampleCount - 1);
                     var time = this.length * timeRatio;
-                    var frequency = Sound.FREQUENCY_MIN + this.frequencySource.render(timeRatio) * Sound.FREQUENCY_RANGE;
+                    var frequency = this.frequencySource.render(timeRatio);
                     var level = this.levelSource.render(timeRatio);
                     var waveLength = 1 / frequency;
                     var waveTimeElapsed = sampleTimeDiff / waveLength;
@@ -401,9 +401,6 @@ var pirsound;
                 }
                 return result;
             };
-            Sound.FREQUENCY_MAX = 20000;
-            Sound.FREQUENCY_MIN = 20;
-            Sound.FREQUENCY_RANGE = Sound.FREQUENCY_MAX - Sound.FREQUENCY_MIN;
             return Sound;
         })();
         sound.Sound = Sound;
@@ -522,18 +519,23 @@ var pirsound;
             console.log(pw.render(.9999));
 
             var sineWave = new pirsound.wave.SineWave();
-            var freqWave = new pirsound.wave.ConstantWave(440);
+            var freqWave = new pirsound.wave.ConstantWave(261.63);
             var levelWave = new pirsound.wave.ConstantWave(100);
             var snd = new pirsound.sound.Sound(sineWave, freqWave, levelWave, 1);
             var data = snd.render();
+            console.log(data);
             var fltr = new pirsound.filter.NormalizeFilter(32767, true);
             var rw = new RIFFWAVE();
             rw.header.sampleRate = 44100;
             rw.header.bitsPerSample = 16;
             rw.Make(fltr.filter(data));
 
-            var audio = new Audio(rw.dataURI);
-            audio.play();
+            //			var audio = new Audio(rw.dataURI);
+            //			audio.play();
+            var audioElement = document.createElement('audio');
+            audioElement.src = rw.dataURI;
+            audioElement.controls = true;
+            document.body.insertBefore(audioElement, Main.test1);
         };
         return Main;
     })();
