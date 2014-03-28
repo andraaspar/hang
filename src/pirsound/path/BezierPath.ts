@@ -14,7 +14,7 @@ module pirsound.path {
 		linearize(steps: number): Path {
 			var newPoints: Array<Point> = [];
 
-			for (var i = 0, n = newPoints.length - 1; i < n; i++) {
+			for (var i = 0, n = this.getPointCount() - 1; i < n; i++) {
 				newPoints.pop();
 				var pointA = this.getPoint(i);
 				var pointB = this.getPoint(i + 1);
@@ -28,14 +28,15 @@ module pirsound.path {
 			var result: Array<Point> = [];
 			var axes = [geom.Axis.X, geom.Axis.Y];
 			var positionsX: Array<number> = [];
+			var pointsPerSegment = steps + 1;
 
 			for (var axisID = 0; axisID < axes.length; axisID++) {
 				var axis = axes[axisID];
-				for (var t = 0; t < steps; t++) {
-					var ratio = t / (steps - 1);
+				for (var t = 0; t < pointsPerSegment; t++) {
+					var ratio = t / (pointsPerSegment - 1);
 
 					var pos = this.calculateBezierPosition([pointA.getOffset(axis), pointA.getHandleOffset(axis, geom.End.END),
-						pointB.getHandleOffset(axis, geom.End.START), pointB.getOffset(axis)], t);
+						pointB.getHandleOffset(axis, geom.End.START), pointB.getOffset(axis)], ratio);
 
 					if (axis == geom.Axis.X) {
 						positionsX.push(pos[0]);
@@ -45,7 +46,6 @@ module pirsound.path {
 
 				}
 			}
-
 
 			return result;
 		}

@@ -1,6 +1,6 @@
-/// <reference path='IWave.ts'/>
+/// <reference path='../wave/IWave.ts'/>
 
-module pirsound {
+module pirsound.sound {
 	export class Sound {
 		static FREQUENCY_MAX = 20000;
 		static FREQUENCY_MIN = 20;
@@ -8,7 +8,7 @@ module pirsound {
 		
 		private sampleFrequency = 44100;
 		
-		constructor(private wave: IWave, private frequencySource: IWave, private levelSource: IWave, private length: number) {
+		constructor(private wave: wave.IWave, private frequencySource: wave.IWave, private levelSource: wave.IWave, private length: number) {
 			
 		}
 

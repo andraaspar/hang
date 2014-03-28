@@ -15,7 +15,7 @@ module pirsound {
 			Main.test1Document = <Document>Main.test1.contentDocument;
 			Main.freq1 = <any>Main.test1Document.getElementById('freq-1');
 			var bezierPath = path.SVGPathConverter.convert(Main.freq1);
-			console.log(bezierPath);
+			console.log(bezierPath.linearize(2));
 		}
 	}
 }

@@ -74,6 +74,10 @@ var pirsound;
                 return this.points[i];
             };
 
+            Path.prototype.getPointCount = function () {
+                return this.points.length;
+            };
+
             Path.prototype.getSize = function (axis) {
                 return this.getOffset(axis, 1 /* END */) - this.getOffset(axis, 0 /* START */);
             };
@@ -187,7 +191,7 @@ var pirsound;
             BezierPath.prototype.linearize = function (steps) {
                 var newPoints = [];
 
-                for (var i = 0, n = newPoints.length - 1; i < n; i++) {
+                for (var i = 0, n = this.getPointCount() - 1; i < n; i++) {
                     newPoints.pop();
                     var pointA = this.getPoint(i);
                     var pointB = this.getPoint(i + 1);
@@ -201,15 +205,16 @@ var pirsound;
                 var result = [];
                 var axes = [0 /* X */, 1 /* Y */];
                 var positionsX = [];
+                var pointsPerSegment = steps + 1;
 
                 for (var axisID = 0; axisID < axes.length; axisID++) {
                     var axis = axes[axisID];
-                    for (var t = 0; t < steps; t++) {
-                        var ratio = t / (steps - 1);
+                    for (var t = 0; t < pointsPerSegment; t++) {
+                        var ratio = t / (pointsPerSegment - 1);
 
                         var pos = this.calculateBezierPosition([
                             pointA.getOffset(axis), pointA.getHandleOffset(axis, 1 /* END */),
-                            pointB.getHandleOffset(axis, 0 /* START */), pointB.getOffset(axis)], t);
+                            pointB.getHandleOffset(axis, 0 /* START */), pointB.getOffset(axis)], ratio);
 
                         if (axis == 0 /* X */) {
                             positionsX.push(pos[0]);
@@ -344,7 +349,7 @@ var pirsound;
             Main.test1Document = Main.test1.contentDocument;
             Main.freq1 = Main.test1Document.getElementById('freq-1');
             var bezierPath = pirsound.path.SVGPathConverter.convert(Main.freq1);
-            console.log(bezierPath);
+            console.log(bezierPath.linearize(2));
         };
         return Main;
     })();

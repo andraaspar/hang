@@ -12,6 +12,10 @@ module pirsound.path {
 			return this.points[i];
 		}
 		
+		getPointCount() {
+			return this.points.length;
+		}
+		
 		getSize(axis: geom.Axis) {
 			return this.getOffset(axis, geom.End.END) - this.getOffset(axis, geom.End.START);
 		}
