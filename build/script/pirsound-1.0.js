@@ -3,28 +3,22 @@ var pirsound;
 (function (pirsound) {
     (function (filter) {
         var NormalizeFilter = (function () {
-            function NormalizeFilter(size, castToInt) {
+            function NormalizeFilter(size) {
                 if (typeof size === "undefined") { size = 1; }
-                if (typeof castToInt === "undefined") { castToInt = false; }
                 this.size = size;
-                this.castToInt = castToInt;
             }
             NormalizeFilter.prototype.filter = function (source) {
-                var result;
+                var result = [];
 
-                var maxValue = Math.max.apply(Math, source);
-                var minValue = Math.min.apply(Math, source);
-                var maxAbsValue = Math.max(Math.abs(minValue), Math.abs(maxValue));
+                var maxAbsValue = 0;
+                for (var i = 0, n = source.length; i < n; i++) {
+                    maxAbsValue = Math.max(maxAbsValue, Math.abs(source[i]));
+                }
 
                 var scale = this.size / maxAbsValue;
 
-                result = source.map(function (x) {
-                    return x * scale;
-                });
-                if (this.castToInt) {
-                    result = result.map(function (x) {
-                        return Math.floor(x);
-                    });
+                for (var j = 0, o = source.length; j < o; j++) {
+                    result[j] = source[j] * scale;
                 }
 
                 return result;
@@ -298,8 +292,7 @@ var pirsound;
         var SVGPathConverter = (function () {
             function SVGPathConverter() {
             }
-            SVGPathConverter.convert = function (svgPath) {
-                var d = svgPath.getAttribute('d');
+            SVGPathConverter.convert = function (d) {
                 var points = [];
                 var dArr = d.split(' ');
                 var currentCommand = '';
@@ -489,13 +482,13 @@ var pirsound;
     })(pirsound.wave || (pirsound.wave = {}));
     var wave = pirsound.wave;
 })(pirsound || (pirsound = {}));
+/// <reference path='../riffwave.d.ts'/>
 /// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
 /// <reference path='sound/Sound.ts'/>
 /// <reference path='wave/ConstantWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
 /// <reference path='wave/SineWave.ts'/>
-/// <reference path='../riffwave.d.ts'/>
 var pirsound;
 (function (pirsound) {
     var Main = (function () {
@@ -509,31 +502,26 @@ var pirsound;
             Main.test1 = document.getElementById('test-1');
             Main.test1Document = Main.test1.contentDocument;
             Main.freq1 = Main.test1Document.getElementById('freq-1');
-            var bezierPath = pirsound.path.SVGPathConverter.convert(Main.freq1);
-            console.log(bezierPath);
-            var linearPath = bezierPath.linearize(1);
-            console.log(linearPath);
-            var pw = new pirsound.wave.PathWave(linearPath);
-            console.log(pw.render(0));
-            console.log(pw.render(.5));
-            console.log(pw.render(.9999));
+            var bezierPath = pirsound.path.SVGPathConverter.convert(Main.freq1.getAttribute('d'));
+            var linearPath = bezierPath.linearize(100);
+            var pathWave = new pirsound.wave.PathWave(linearPath);
+            console.log(pathWave.render(0));
+            console.log(pathWave.render(.5));
+            console.log(pathWave.render(.9999));
 
             var sineWave = new pirsound.wave.SineWave();
-            var freqWave = new pirsound.wave.ConstantWave(261.63);
+            var freqWave = new pirsound.wave.ConstantWave(440);
             var levelWave = new pirsound.wave.ConstantWave(100);
-            var snd = new pirsound.sound.Sound(sineWave, freqWave, levelWave, 1);
+            var snd = new pirsound.sound.Sound(sineWave, pathWave, levelWave, 5);
             var data = snd.render();
-            console.log(data);
-            var fltr = new pirsound.filter.NormalizeFilter(32767, true);
-            var rw = new RIFFWAVE();
-            rw.header.sampleRate = 44100;
-            rw.header.bitsPerSample = 16;
-            rw.Make(fltr.filter(data));
+            var normalizer = new pirsound.filter.NormalizeFilter(Math.round(32767 * .99));
+            var riffWave = new RIFFWAVE();
+            riffWave.header.sampleRate = 44100;
+            riffWave.header.bitsPerSample = 16;
+            riffWave.Make(normalizer.filter(data));
 
-            //			var audio = new Audio(rw.dataURI);
-            //			audio.play();
             var audioElement = document.createElement('audio');
-            audioElement.src = rw.dataURI;
+            audioElement.src = riffWave.dataURI;
             audioElement.controls = true;
             document.body.insertBefore(audioElement, Main.test1);
         };

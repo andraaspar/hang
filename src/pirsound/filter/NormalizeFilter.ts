@@ -3,20 +3,20 @@
 module pirsound.filter {
 	export class NormalizeFilter implements IFilter {
 	
-		constructor(private size = 1, private castToInt = false) {}
+		constructor(private size = 1) {}
 		
 		filter(source: Array<number>): Array<number> {
-			var result: Array<number>;
+			var result: Array<number> = [];
 			
-			var maxValue = Math.max.apply(Math, source);
-			var minValue = Math.min.apply(Math, source);
-			var maxAbsValue = Math.max(Math.abs(minValue), Math.abs(maxValue));
+			var maxAbsValue = 0;
+			for (var i = 0, n = source.length; i < n; i++) {
+				maxAbsValue = Math.max(maxAbsValue, Math.abs(source[i]));
+			}
 			
 			var scale = this.size / maxAbsValue;
 			
-			result = source.map(function(x) {return x * scale});
-			if (this.castToInt) {
-				result = result.map(function(x) {return Math.floor(x)});
+			for (var j = 0, o = source.length; j < o; j++) {
+				result[j] = source[j] * scale;
 			}
 			
 			return result;

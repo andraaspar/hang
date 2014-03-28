@@ -21,28 +21,26 @@ module pirsound {
 			Main.test1 = <HTMLObjectElement>document.getElementById('test-1');
 			Main.test1Document = <Document>Main.test1.contentDocument;
 			Main.freq1 = <any>Main.test1Document.getElementById('freq-1');
-			var bezierPath = path.SVGPathConverter.convert(Main.freq1);
-			console.log(bezierPath);
-			var linearPath = bezierPath.linearize(1);
-			console.log(linearPath);
-			var pw = new wave.PathWave(linearPath);
-			console.log(pw.render(0));
-			console.log(pw.render(.5));
-			console.log(pw.render(.9999));
+			var bezierPath = path.SVGPathConverter.convert(Main.freq1.getAttribute('d'));
+			var linearPath = bezierPath.linearize(100);
+			var pathWave = new wave.PathWave(linearPath);
+			console.log(pathWave.render(0));
+			console.log(pathWave.render(.5));
+			console.log(pathWave.render(.9999));
 			
 			var sineWave = new wave.SineWave();
-			var freqWave = new wave.ConstantWave(261.63);
+			var freqWave = new wave.ConstantWave(440);
 			var levelWave = new wave.ConstantWave(100);
-			var snd = new sound.Sound(sineWave, freqWave, levelWave, 1);
+			var snd = new sound.Sound(sineWave, pathWave, levelWave, 5);
 			var data = snd.render();
-			var fltr = new filter.NormalizeFilter(32760, true);
-			var rw = new RIFFWAVE();
-			rw.header.sampleRate = 44100;
-			rw.header.bitsPerSample = 16;
-			rw.Make(fltr.filter(data));
+			var normalizer = new filter.NormalizeFilter(Math.round(32767 * .99));
+			var riffWave = new RIFFWAVE();
+			riffWave.header.sampleRate = 44100;
+			riffWave.header.bitsPerSample = 16;
+			riffWave.Make(normalizer.filter(data));
 			
 			var audioElement:HTMLAudioElement = document.createElement('audio');
-			audioElement.src = rw.dataURI;
+			audioElement.src = riffWave.dataURI;
 			audioElement.controls = true;
 			document.body.insertBefore(audioElement, Main.test1);
 		}

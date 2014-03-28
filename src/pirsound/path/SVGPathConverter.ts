@@ -12,8 +12,7 @@ module pirsound.path {
 		static CURVE_TO = 'C';
 		static LINE_TO = 'L';
 
-		static convert(svgPath: SVGPathElement) {
-			var d = svgPath.getAttribute('d');
+		static convert(d: string) {
 			var points: Array<BezierPoint> = [];
 			var dArr = d.split(' ');
 			var currentCommand = '';
