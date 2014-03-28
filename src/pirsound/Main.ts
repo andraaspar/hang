@@ -1,5 +1,10 @@
+/// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='sound/Sound.ts'/>
+/// <reference path='wave/ConstantWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
+/// <reference path='wave/SineWave.ts'/>
+/// <reference path='../riffwave.d.ts'/>
 
 module pirsound {
 	export class Main {
@@ -22,7 +27,21 @@ module pirsound {
 			var pw = new wave.PathWave(linearPath);
 			console.log(pw.render(0));
 			console.log(pw.render(.5));
-			console.log(pw.render(.98));
+			console.log(pw.render(.9999));
+			
+			var sineWave = new wave.SineWave();
+			var freqWave = new wave.ConstantWave(440);
+			var levelWave = new wave.ConstantWave(100);
+			var snd = new sound.Sound(sineWave, freqWave, levelWave, 1);
+			var data = snd.render();
+			var fltr = new filter.NormalizeFilter(32767, true);
+			var rw = new RIFFWAVE();
+			rw.header.sampleRate = 44100;
+			rw.header.bitsPerSample = 16;
+			rw.Make(fltr.filter(data));
+			
+			var audio = new Audio(rw.dataURI);
+			audio.play();
 		}
 	}
 }

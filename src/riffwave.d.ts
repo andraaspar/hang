@@ -13,11 +13,17 @@ interface RIFFWAVEHeader {
 	bitsPerSample: number;
 }
 
-interface RIFFWAVE {
+declare class RIFFWAVE {
+	/**
+	 * 8 bit data is unsigned: 0..255
+	 * 16 bit data is signed: −32,768..32,767
+	 */
 	constructor(data?: Array<number>);
 	header: RIFFWAVEHeader;
 	/**
 	 * Array containing audio samples
+	 * 8 bit data is unsigned: 0..255
+	 * 16 bit data is signed: −32,768..32,767
 	 */
 	data: Array<number>;
 	/**
@@ -29,5 +35,9 @@ interface RIFFWAVE {
 	 */
 	dataURI: string;
 
+	/**
+	 * 8 bit data is unsigned: 0..255
+	 * 16 bit data is signed: −32,768..32,767
+	 */
 	Make(data?: Array<number>): void;
 }

@@ -1,5 +1,5 @@
-/// <reference path='../path/Path.ts'/>
 /// <reference path='IWave.ts'/>
+/// <reference path='../path/Path.ts'/>
 
 module pirsound.wave {
 	export class PathWave implements IWave {

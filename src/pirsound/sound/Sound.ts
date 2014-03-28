@@ -14,7 +14,7 @@ module pirsound.sound {
 
 		render(): Array<number> {
 			var result: Array<number> = [0];
-			var sampleCount = Math.ceil(this.length * this.sampleFrequency);
+			var sampleCount = Math.floor(this.length * this.sampleFrequency);
 			var sampleTimeDiff = 1 / this.sampleFrequency;
 			var wavePosition = 0;
 			for (var i = 0; i < sampleCount; i++) {

@@ -1,3 +1,40 @@
+/// <reference path='IFilter.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (filter) {
+        var NormalizeFilter = (function () {
+            function NormalizeFilter(size, castToInt) {
+                if (typeof size === "undefined") { size = 1; }
+                if (typeof castToInt === "undefined") { castToInt = false; }
+                this.size = size;
+                this.castToInt = castToInt;
+            }
+            NormalizeFilter.prototype.filter = function (source) {
+                var result;
+
+                var maxValue = Math.max.apply(Math, source);
+                var minValue = Math.min.apply(Math, source);
+                var maxAbsValue = Math.max(Math.abs(minValue), Math.abs(maxValue));
+
+                var scale = this.size / maxAbsValue;
+
+                result = source.map(function (x) {
+                    return x * scale;
+                });
+                if (this.castToInt) {
+                    result = result.map(function (x) {
+                        return Math.floor(x);
+                    });
+                }
+
+                return result;
+            };
+            return NormalizeFilter;
+        })();
+        filter.NormalizeFilter = NormalizeFilter;
+    })(pirsound.filter || (pirsound.filter = {}));
+    var filter = pirsound.filter;
+})(pirsound || (pirsound = {}));
 var pirsound;
 (function (pirsound) {
     (function (geom) {
@@ -334,8 +371,64 @@ var pirsound;
     })(pirsound.path || (pirsound.path = {}));
     var path = pirsound.path;
 })(pirsound || (pirsound = {}));
-/// <reference path='../path/Path.ts'/>
+/// <reference path='../wave/IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (sound) {
+        var Sound = (function () {
+            function Sound(wave, frequencySource, levelSource, length) {
+                this.wave = wave;
+                this.frequencySource = frequencySource;
+                this.levelSource = levelSource;
+                this.length = length;
+                this.sampleFrequency = 44100;
+            }
+            Sound.prototype.render = function () {
+                var result = [0];
+                var sampleCount = Math.floor(this.length * this.sampleFrequency);
+                var sampleTimeDiff = 1 / this.sampleFrequency;
+                var wavePosition = 0;
+                for (var i = 0; i < sampleCount; i++) {
+                    var timeRatio = i / (sampleCount - 1);
+                    var time = this.length * timeRatio;
+                    var frequency = Sound.FREQUENCY_MIN + this.frequencySource.render(timeRatio) * Sound.FREQUENCY_RANGE;
+                    var level = this.levelSource.render(timeRatio);
+                    var waveLength = 1 / frequency;
+                    var waveTimeElapsed = sampleTimeDiff / waveLength;
+                    wavePosition += waveTimeElapsed;
+                    var waveRendered = this.wave.render(wavePosition) * level;
+                    result.push(waveRendered);
+                }
+                return result;
+            };
+            Sound.FREQUENCY_MAX = 20000;
+            Sound.FREQUENCY_MIN = 20;
+            Sound.FREQUENCY_RANGE = Sound.FREQUENCY_MAX - Sound.FREQUENCY_MIN;
+            return Sound;
+        })();
+        sound.Sound = Sound;
+    })(pirsound.sound || (pirsound.sound = {}));
+    var sound = pirsound.sound;
+})(pirsound || (pirsound = {}));
 /// <reference path='IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (wave) {
+        var ConstantWave = (function () {
+            function ConstantWave(value) {
+                this.value = value;
+            }
+            ConstantWave.prototype.render = function (time) {
+                return this.value;
+            };
+            return ConstantWave;
+        })();
+        wave.ConstantWave = ConstantWave;
+    })(pirsound.wave || (pirsound.wave = {}));
+    var wave = pirsound.wave;
+})(pirsound || (pirsound = {}));
+/// <reference path='IWave.ts'/>
+/// <reference path='../path/Path.ts'/>
 var pirsound;
 (function (pirsound) {
     (function (wave) {
@@ -382,8 +475,30 @@ var pirsound;
     })(pirsound.wave || (pirsound.wave = {}));
     var wave = pirsound.wave;
 })(pirsound || (pirsound = {}));
+/// <reference path='IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (wave) {
+        var SineWave = (function () {
+            function SineWave() {
+            }
+            SineWave.prototype.render = function (time) {
+                return Math.sin(time * SineWave.DOUBLE_PI);
+            };
+            SineWave.DOUBLE_PI = Math.PI * 2;
+            return SineWave;
+        })();
+        wave.SineWave = SineWave;
+    })(pirsound.wave || (pirsound.wave = {}));
+    var wave = pirsound.wave;
+})(pirsound || (pirsound = {}));
+/// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='sound/Sound.ts'/>
+/// <reference path='wave/ConstantWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
+/// <reference path='wave/SineWave.ts'/>
+/// <reference path='../riffwave.d.ts'/>
 var pirsound;
 (function (pirsound) {
     var Main = (function () {
@@ -404,7 +519,21 @@ var pirsound;
             var pw = new pirsound.wave.PathWave(linearPath);
             console.log(pw.render(0));
             console.log(pw.render(.5));
-            console.log(pw.render(.98));
+            console.log(pw.render(.9999));
+
+            var sineWave = new pirsound.wave.SineWave();
+            var freqWave = new pirsound.wave.ConstantWave(440);
+            var levelWave = new pirsound.wave.ConstantWave(100);
+            var snd = new pirsound.sound.Sound(sineWave, freqWave, levelWave, 1);
+            var data = snd.render();
+            var fltr = new pirsound.filter.NormalizeFilter(32767, true);
+            var rw = new RIFFWAVE();
+            rw.header.sampleRate = 44100;
+            rw.header.bitsPerSample = 16;
+            rw.Make(fltr.filter(data));
+
+            var audio = new Audio(rw.dataURI);
+            audio.play();
         };
         return Main;
     })();
