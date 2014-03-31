@@ -507,6 +507,24 @@ var pirsound;
     var wave = pirsound.wave;
 })(pirsound || (pirsound = {}));
 /// <reference path='IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (wave) {
+        var MultiplyWave = (function () {
+            function MultiplyWave(source, multiplier) {
+                this.source = source;
+                this.multiplier = multiplier;
+            }
+            MultiplyWave.prototype.render = function (time) {
+                return this.source.render(time) * this.multiplier;
+            };
+            return MultiplyWave;
+        })();
+        wave.MultiplyWave = MultiplyWave;
+    })(pirsound.wave || (pirsound.wave = {}));
+    var wave = pirsound.wave;
+})(pirsound || (pirsound = {}));
+/// <reference path='IWave.ts'/>
 /// <reference path='../path/Path.ts'/>
 var pirsound;
 (function (pirsound) {
@@ -571,14 +589,32 @@ var pirsound;
     })(pirsound.wave || (pirsound.wave = {}));
     var wave = pirsound.wave;
 })(pirsound || (pirsound = {}));
+/// <reference path='IWave.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (wave) {
+        var SquareWave = (function () {
+            function SquareWave() {
+            }
+            SquareWave.prototype.render = function (time) {
+                return Math.round(time % 1) * -2 + 1;
+            };
+            return SquareWave;
+        })();
+        wave.SquareWave = SquareWave;
+    })(pirsound.wave || (pirsound.wave = {}));
+    var wave = pirsound.wave;
+})(pirsound || (pirsound = {}));
 /// <reference path='../riffwave.d.ts'/>
 /// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
 /// <reference path='sound/Mixer.ts'/>
 /// <reference path='sound/Sound.ts'/>
 /// <reference path='wave/ConstantWave.ts'/>
+/// <reference path='wave/MultiplyWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
 /// <reference path='wave/SineWave.ts'/>
+/// <reference path='wave/SquareWave.ts'/>
 var pirsound;
 (function (pirsound) {
     var Main = (function () {
@@ -600,10 +636,16 @@ var pirsound;
             console.log(pathWave.render(.9999));
 
             var sineWave = new pirsound.wave.SineWave();
-            var freqWave = new pirsound.wave.ConstantWave(440);
+            var squareWave = new pirsound.wave.SquareWave();
+            var freqWave = new pirsound.wave.ConstantWave(261.626);
+            var multiplyWave = new pirsound.wave.MultiplyWave(pathWave, .5);
+            var multiplyWave2 = new pirsound.wave.MultiplyWave(multiplyWave, .5);
+            var multiplyWave3 = new pirsound.wave.MultiplyWave(multiplyWave, 2);
             var levelWave = new pirsound.wave.ConstantWave(100);
-            var snd = new pirsound.sound.Sound(sineWave, pathWave, levelWave, 5);
-            var mixer = new pirsound.sound.Mixer([snd]);
+            var snd = new pirsound.sound.Sound(sineWave, multiplyWave, levelWave, 5);
+            var snd2 = new pirsound.sound.Sound(squareWave, multiplyWave2, levelWave, 5);
+            var snd3 = new pirsound.sound.Sound(pathWave, multiplyWave3, levelWave, 5);
+            var mixer = new pirsound.sound.Mixer([snd, snd2, snd3]);
             mixer.render();
             var data = mixer.getOutput();
             var normalizer = new pirsound.filter.NormalizeFilter(Math.round(32767 * .99));
