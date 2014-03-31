@@ -2,6 +2,7 @@
 
 /// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='sound/Mixer.ts'/>
 /// <reference path='sound/Sound.ts'/>
 /// <reference path='wave/ConstantWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
@@ -32,7 +33,9 @@ module pirsound {
 			var freqWave = new wave.ConstantWave(440);
 			var levelWave = new wave.ConstantWave(100);
 			var snd = new sound.Sound(sineWave, pathWave, levelWave, 5);
-			var data = snd.render();
+			var mixer = new sound.Mixer([snd]);
+			mixer.render();
+			var data = mixer.getOutput();
 			var normalizer = new filter.NormalizeFilter(Math.round(32767 * .99));
 			var riffWave = new RIFFWAVE();
 			riffWave.header.sampleRate = 44100;
@@ -42,7 +45,7 @@ module pirsound {
 			var audioElement:HTMLAudioElement = document.createElement('audio');
 			audioElement.src = riffWave.dataURI;
 			audioElement.controls = true;
-			document.body.insertBefore(audioElement, Main.test1);
+			document.body.insertBefore(audioElement, document.body.firstChild);
 		}
 	}
 }

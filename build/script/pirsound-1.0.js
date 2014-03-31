@@ -374,12 +374,13 @@ var pirsound;
                 this.frequencySource = frequencySource;
                 this.levelSource = levelSource;
                 this.length = length;
-                this.sampleFrequency = 44100;
+                this.startTime = 0;
+                this.startSampleID = 0;
             }
             Sound.prototype.render = function () {
-                var result = [0];
-                var sampleCount = Math.floor(this.length * this.sampleFrequency);
-                var sampleTimeDiff = 1 / this.sampleFrequency;
+                this.output = [0];
+                var sampleCount = this.getSampleCount();
+                var sampleTimeDiff = 1 / Sound.sampleFrequency;
                 var wavePosition = 0;
                 for (var i = 0; i < sampleCount; i++) {
                     var timeRatio = i / (sampleCount - 1);
@@ -390,13 +391,101 @@ var pirsound;
                     var waveTimeElapsed = sampleTimeDiff / waveLength;
                     wavePosition += waveTimeElapsed;
                     var waveRendered = this.wave.render(wavePosition) * level;
-                    result.push(waveRendered);
+                    this.output.push(waveRendered);
                 }
-                return result;
             };
+
+            Sound.prototype.getOutputSample = function (id) {
+                return this.output[id];
+            };
+
+            Sound.prototype.getStartTime = function () {
+                return this.startTime;
+            };
+
+            Sound.prototype.setStartTime = function (value) {
+                this.startTime = value;
+                this.startSampleID = Math.floor(this.startTime * Sound.sampleFrequency);
+            };
+
+            Sound.prototype.getStartSampleID = function () {
+                return this.startSampleID;
+            };
+
+            Sound.prototype.setStartSampleID = function (value) {
+                this.startSampleID = value;
+                this.startTime = this.startSampleID / Sound.sampleFrequency;
+            };
+
+            Sound.prototype.getTimeLength = function () {
+                return this.length;
+            };
+
+            Sound.prototype.getSampleCount = function () {
+                return Math.floor(this.getTimeLength() * Sound.sampleFrequency);
+            };
+            Sound.sampleFrequency = 44100;
             return Sound;
         })();
         sound.Sound = Sound;
+    })(pirsound.sound || (pirsound.sound = {}));
+    var sound = pirsound.sound;
+})(pirsound || (pirsound = {}));
+/// <reference path='Sound.ts'/>
+var pirsound;
+(function (pirsound) {
+    (function (_sound) {
+        var Mixer = (function () {
+            function Mixer(sounds) {
+                this.sounds = sounds;
+            }
+            Mixer.prototype.getTimeLength = function () {
+                var result = 0;
+                for (var i = 0, n = this.sounds.length; i < n; i++) {
+                    var sound = this.sounds[i];
+                    result = Math.max(result, sound.getStartTime() + sound.getTimeLength());
+                }
+                return result;
+            };
+
+            Mixer.prototype.getSampleCount = function () {
+                var result = 0;
+                for (var i = 0, n = this.sounds.length; i < n; i++) {
+                    var sound = this.sounds[i];
+                    result = Math.max(result, sound.getStartSampleID() + sound.getSampleCount());
+                }
+                return result;
+            };
+
+            Mixer.prototype.render = function () {
+                this.renderSounds();
+
+                this.output = [];
+                var soundCount = this.sounds.length;
+                for (var sampleID = 0, sampleCount = this.getSampleCount(); sampleID < sampleCount; sampleID++) {
+                    var value = 0;
+                    for (var soundID = 0; soundID < soundCount; soundID++) {
+                        var sound = this.sounds[soundID];
+                        if (sound.getStartSampleID() <= sampleID && sound.getStartSampleID() + sound.getSampleCount() > sampleID) {
+                            value += sound.getOutputSample(sampleID - sound.getStartSampleID());
+                        }
+                    }
+                    this.output.push(value);
+                }
+            };
+
+            Mixer.prototype.renderSounds = function () {
+                for (var i = 0, n = this.sounds.length; i < n; i++) {
+                    this.sounds[i].render();
+                }
+            };
+
+            Mixer.prototype.getOutput = function () {
+                return this.output;
+            };
+            return Mixer;
+        })();
+        _sound.Mixer = Mixer;
     })(pirsound.sound || (pirsound.sound = {}));
     var sound = pirsound.sound;
 })(pirsound || (pirsound = {}));
@@ -485,6 +574,7 @@ var pirsound;
 /// <reference path='../riffwave.d.ts'/>
 /// <reference path='filter/NormalizeFilter.ts'/>
 /// <reference path='path/SVGPathConverter.ts'/>
+/// <reference path='sound/Mixer.ts'/>
 /// <reference path='sound/Sound.ts'/>
 /// <reference path='wave/ConstantWave.ts'/>
 /// <reference path='wave/PathWave.ts'/>
@@ -513,7 +603,9 @@ var pirsound;
             var freqWave = new pirsound.wave.ConstantWave(440);
             var levelWave = new pirsound.wave.ConstantWave(100);
             var snd = new pirsound.sound.Sound(sineWave, pathWave, levelWave, 5);
-            var data = snd.render();
+            var mixer = new pirsound.sound.Mixer([snd]);
+            mixer.render();
+            var data = mixer.getOutput();
             var normalizer = new pirsound.filter.NormalizeFilter(Math.round(32767 * .99));
             var riffWave = new RIFFWAVE();
             riffWave.header.sampleRate = 44100;
@@ -523,7 +615,7 @@ var pirsound;
             var audioElement = document.createElement('audio');
             audioElement.src = riffWave.dataURI;
             audioElement.controls = true;
-            document.body.insertBefore(audioElement, Main.test1);
+            document.body.insertBefore(audioElement, document.body.firstChild);
         };
         return Main;
     })();

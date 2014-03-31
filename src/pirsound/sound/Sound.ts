@@ -2,16 +2,20 @@
 
 module pirsound.sound {
 	export class Sound {
-		private sampleFrequency = 44100;
-		
+		static sampleFrequency = 44100;
+
+		private startTime = 0;
+		private startSampleID = 0;
+		private output: Array<number>;
+
 		constructor(private wave: wave.IWave, private frequencySource: wave.IWave, private levelSource: wave.IWave, private length: number) {
-			
+
 		}
 
-		render(): Array<number> {
-			var result: Array<number> = [0];
-			var sampleCount = Math.floor(this.length * this.sampleFrequency);
-			var sampleTimeDiff = 1 / this.sampleFrequency;
+		render() {
+			this.output = [0];
+			var sampleCount = this.getSampleCount();
+			var sampleTimeDiff = 1 / Sound.sampleFrequency;
 			var wavePosition = 0;
 			for (var i = 0; i < sampleCount; i++) {
 				var timeRatio = i / (sampleCount - 1);
@@ -22,9 +26,38 @@ module pirsound.sound {
 				var waveTimeElapsed = sampleTimeDiff / waveLength;
 				wavePosition += waveTimeElapsed;
 				var waveRendered = this.wave.render(wavePosition) * level;
-				result.push(waveRendered);
+				this.output.push(waveRendered);
 			}
-			return result;
+		}
+
+		getOutputSample(id: number) {
+			return this.output[id];
+		}
+
+		getStartTime() {
+			return this.startTime;
+		}
+
+		setStartTime(value: number) {
+			this.startTime = value;
+			this.startSampleID = Math.floor(this.startTime * Sound.sampleFrequency);
+		}
+
+		getStartSampleID() {
+			return this.startSampleID;
+		}
+
+		setStartSampleID(value: number) {
+			this.startSampleID = value;
+			this.startTime = this.startSampleID / Sound.sampleFrequency;
+		}
+
+		getTimeLength() {
+			return this.length;
+		}
+
+		getSampleCount() {
+			return Math.floor(this.getTimeLength() * Sound.sampleFrequency);
 		}
 	}
 }
