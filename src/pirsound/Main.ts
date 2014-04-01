@@ -27,21 +27,23 @@ module pirsound {
 			var bezierPath = path.SVGPathConverter.convert(Main.freq1.getAttribute('d'));
 			var linearPath = bezierPath.linearize(100);
 			var pathWave = new wave.PathWave(linearPath);
-			console.log(pathWave.render(0));
-			console.log(pathWave.render(.5));
-			console.log(pathWave.render(.9999));
+			
+			var wave1Bezier = path.SVGPathConverter.convert(Main.test1Document.getElementById('wave-1').getAttribute('d'));
+			var wave1Linear = wave1Bezier.linearize(1);
+			var wave1 = new wave.PathWave(wave1Linear);
 			
 			var sineWave = new wave.SineWave();
 			var squareWave = new wave.SquareWave();
-			var freqWave = new wave.ConstantWave(261.626);
-			var multiplyWave = new wave.MultiplyWave(pathWave, .5);
+			var freqWave = new wave.ConstantWave(30);
+			var multiplyWave = new wave.MultiplyWave(pathWave, .1);
 			var multiplyWave2 = new wave.MultiplyWave(multiplyWave, .5);
-			var multiplyWave3 = new wave.MultiplyWave(multiplyWave, 2);
+			var multiplyWave3 = new wave.MultiplyWave(multiplyWave, 1.5);
 			var levelWave = new wave.ConstantWave(100);
-			var snd = new sound.Sound(sineWave, multiplyWave, levelWave, 5);
-			var snd2 = new sound.Sound(squareWave, multiplyWave2, levelWave, 5);
-			var snd3 = new sound.Sound(pathWave, multiplyWave3, levelWave, 5);
-			var mixer = new sound.Mixer([snd, snd2, snd3]);
+			var snd = new sound.Sound(wave1, multiplyWave, levelWave, 5);
+			var snd2 = new sound.Sound(wave1, multiplyWave2, levelWave, 5);
+			var snd3 = new sound.Sound(wave1, multiplyWave3, levelWave, 5);
+			var snd4 = new sound.Sound(wave1, freqWave, levelWave, 5);
+			var mixer = new sound.Mixer([snd, snd2]);
 			mixer.render();
 			var data = mixer.getOutput();
 			var normalizer = new filter.NormalizeFilter(Math.round(32767 * .99));
