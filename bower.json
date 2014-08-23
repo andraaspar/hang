@@ -1,0 +1,29 @@
+{
+	"name": "hang",
+	"version": "1.0.0",
+	"homepage": "https://github.com/andraaspar/hang",
+	"authors": [
+		"András Parditka"
+	],
+	"description": "Sound generator framework.",
+	"keywords": [
+		"sound",
+		"generator",
+		"framework",
+		"TypeScript"
+	],
+	"license": "MIT",
+	"ignore": [
+		"**/.*",
+		"bower_components",
+		"build",
+		"lib",
+		"node_modules",
+		"test",
+		"Gruntfile.js",
+		"package.json"
+	],
+	"dependencies": {
+		"berek": "andraaspar/berek#v1.2"
+	}
+}
