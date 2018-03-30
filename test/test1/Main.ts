@@ -35,26 +35,33 @@ module test1 {
 			this.freq1 = <any>this.test1Document.getElementById('freq-1');
 			var bezierPath = hang.path.SVGPathConverter.convert(this.freq1.getAttribute('d'));
 			var linearPath = bezierPath.linearize(100);
+			
+			var pathElement = this.test1Document.createElementNS('http://www.w3.org/2000/svg', 'path')
+			this.freq1.parentNode.appendChild(pathElement)
+			pathElement.setAttribute('style', 'fill:none;stroke:green;stroke-width:1px;')
+			pathElement.setAttribute('d', hang.path.SVGPathConverter.linearPathToSvg(linearPath))
+			
 			var pathWave = new hang.wave.PathWave(linearPath);
 			
 			var wave1Bezier = hang.path.SVGPathConverter.convert(this.test1Document.getElementById('wave-1').getAttribute('d'));
-			var wave1Linear = wave1Bezier.linearize(1);
+			var wave1Linear = wave1Bezier.linearize(100);
 			var wave1 = new hang.wave.PathWave(wave1Linear);
 			
-			var sineWave = new hang.wave.SineWave();
-			var squareWave = new hang.wave.SquareWave();
-			var freqWave = new hang.wave.ConstantWave(30);
-			var multiplyWave = new hang.wave.MultiplyWave(pathWave, .1);
-			var multiplyWave2 = new hang.wave.MultiplyWave(multiplyWave, .5);
-			var multiplyWave3 = new hang.wave.MultiplyWave(multiplyWave, 1.5);
+			// var sineWave = new hang.wave.SineWave();
+			// var squareWave = new hang.wave.SquareWave();
+			// var freqWave = new hang.wave.ConstantWave(30);
+			// var multiplyWave = new hang.wave.MultiplyWave(pathWave, .1);
+			// var multiplyWave2 = new hang.wave.MultiplyWave(multiplyWave, .5);
+			// var multiplyWave3 = new hang.wave.MultiplyWave(multiplyWave, 1.5);
 			var levelWave = new hang.wave.ConstantWave(100);
-			var snd = new hang.sound.Sound(wave1, multiplyWave, levelWave, 5);
-			var snd2 = new hang.sound.Sound(wave1, multiplyWave2, levelWave, 5);
-			var snd3 = new hang.sound.Sound(wave1, multiplyWave3, levelWave, 5);
-			var snd4 = new hang.sound.Sound(wave1, freqWave, levelWave, 5);
-			var mixer = new hang.sound.Mixer([snd, snd2]);
-			mixer.render();
-			var data = mixer.getOutput();
+			var snd = new hang.sound.Sound(wave1, pathWave, levelWave, 5);
+			// var snd2 = new hang.sound.Sound(wave1, multiplyWave2, levelWave, 5);
+			// var snd3 = new hang.sound.Sound(wave1, multiplyWave3, levelWave, 5);
+			// var snd4 = new hang.sound.Sound(wave1, freqWave, levelWave, 5);
+			// var mixer = new hang.sound.Mixer([snd, snd2]);
+			// mixer.render();
+			snd.render();
+			var data = snd.getOutput();
 			var normalizer = new hang.filter.NormalizeFilter(Math.round(32767 * .99));
 			var riffWave = new RIFFWAVE();
 			riffWave.header.sampleRate = 44100;

@@ -14,7 +14,7 @@ module.exports = function(grunt) {
 		typescript: {
 			compile: {
 				files: {
-					'build/script/test.js': 'test/test2/Main.ts'
+					'build/script/test.js': 'test/test1/Main.ts'
 				}
 			}
 		},

@@ -90,8 +90,21 @@ var illa;
     }
     illa.bind = bind;
 
+    function partial(fn, obj) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 2); _i++) {
+            args[_i] = arguments[_i + 2];
+        }
+        if (!fn)
+            throw 'No function.';
+        return function () {
+            return fn.apply(obj, args.concat(Array.prototype.slice.call(arguments)));
+        };
+    }
+    illa.partial = partial;
+
     if (Function.prototype.bind) {
-        illa.bind = function (fn, obj) {
+        illa.bind = illa.partial = function (fn, obj) {
             return fn.call.apply(fn.bind, arguments);
         };
     }
@@ -381,7 +394,7 @@ var hang;
 })(hang || (hang = {}));
 var hang;
 (function (hang) {
-    (function (path) {
+    (function (_path) {
         var SVGPathConverter = (function () {
             function SVGPathConverter() {
             }
@@ -398,6 +411,9 @@ var hang;
                         case SVGPathConverter.MOVE_TO:
                         case SVGPathConverter.LINE_TO:
                         case SVGPathConverter.CURVE_TO:
+                        case SVGPathConverter.MOVE_TO_RELATIVE:
+                        case SVGPathConverter.LINE_TO_RELATIVE:
+                        case SVGPathConverter.CURVE_TO_RELATIVE:
                             currentCommand = dPart;
                             break;
                         default:
@@ -416,25 +432,44 @@ var hang;
                                     points.push(lastPoint);
                                     i += 2;
                                     break;
+                                case SVGPathConverter.MOVE_TO_RELATIVE:
+                                case SVGPathConverter.LINE_TO_RELATIVE:
+                                    lastPoint = SVGPathConverter.convertBezierPoint(dPart, undefined, lastPoint);
+                                    points.push(lastPoint);
+                                    break;
+                                case SVGPathConverter.CURVE_TO_RELATIVE:
+                                    var handleCoords = SVGPathConverter.convertCoords(dPart);
+                                    lastPoint.setHandleOffset(0 /* X */, 1 /* END */, lastPoint.getOffset(0 /* X */) + handleCoords.x);
+                                    lastPoint.setHandleOffset(1 /* Y */, 1 /* END */, lastPoint.getOffset(1 /* Y */) + handleCoords.y);
+
+                                    lastPoint = SVGPathConverter.convertBezierPoint(dArr[i + 2], dArr[i + 1], lastPoint);
+                                    points.push(lastPoint);
+                                    i += 2;
+                                    break;
                                 default:
                             }
                     }
                 }
 
-                return new path.BezierPath(points);
+                return new _path.BezierPath(points);
             };
 
-            SVGPathConverter.convertBezierPoint = function (coords, inCoords, outCoords) {
+            SVGPathConverter.convertBezierPoint = function (coords, inCoords, lastPoint) {
                 var coordsConverted = SVGPathConverter.convertCoords(coords);
+                if (lastPoint) {
+                    coordsConverted.x += lastPoint.getOffset(0 /* X */);
+                    coordsConverted.y += lastPoint.getOffset(1 /* Y */);
+                }
                 var inCoordsConverted = coordsConverted;
                 var outCoordsConverted = coordsConverted;
                 if (inCoords) {
                     inCoordsConverted = SVGPathConverter.convertCoords(inCoords);
+                    if (lastPoint) {
+                        inCoordsConverted.x += lastPoint.getOffset(0 /* X */);
+                        inCoordsConverted.y += lastPoint.getOffset(1 /* Y */);
+                    }
                 }
-                if (outCoords) {
-                    outCoordsConverted = SVGPathConverter.convertCoords(outCoords);
-                }
-                return new path.BezierPoint(coordsConverted.x, coordsConverted.y, inCoordsConverted.x, inCoordsConverted.y, outCoordsConverted.x, outCoordsConverted.y);
+                return new _path.BezierPoint(coordsConverted.x, coordsConverted.y, inCoordsConverted.x, inCoordsConverted.y, outCoordsConverted.x, outCoordsConverted.y);
             };
 
             SVGPathConverter.convertCoords = function (coords) {
@@ -448,12 +483,29 @@ var hang;
                 }
                 return result;
             };
+
+            SVGPathConverter.linearPathToSvg = function (path) {
+                var s = '';
+                for (var i = 0, count = path.getPointCount(); i < count; i++) {
+                    var point = path.getPoint(i);
+                    if (i == 0) {
+                        s += 'M ';
+                    } else {
+                        s += ' L ';
+                    }
+                    s += point.getOffset(0 /* X */) + ',' + point.getOffset(1 /* Y */);
+                }
+                return s;
+            };
             SVGPathConverter.MOVE_TO = 'M';
+            SVGPathConverter.MOVE_TO_RELATIVE = 'm';
             SVGPathConverter.CURVE_TO = 'C';
+            SVGPathConverter.CURVE_TO_RELATIVE = 'c';
             SVGPathConverter.LINE_TO = 'L';
+            SVGPathConverter.LINE_TO_RELATIVE = 'l';
             return SVGPathConverter;
         })();
-        path.SVGPathConverter = SVGPathConverter;
+        _path.SVGPathConverter = SVGPathConverter;
     })(hang.path || (hang.path = {}));
     var path = hang.path;
 })(hang || (hang = {}));
@@ -587,27 +639,6 @@ var hang;
 })(hang || (hang = {}));
 var hang;
 (function (hang) {
-    (function (util) {
-        var ChannelCombiner = (function () {
-            function ChannelCombiner() {
-            }
-            ChannelCombiner.combineStereo = function (left, right) {
-                var result = [];
-
-                for (var i = 0, n = Math.max(left.length, right.length); i < n; i++) {
-                    result.push(left[i] || 0, right[i] || 0);
-                }
-
-                return result;
-            };
-            return ChannelCombiner;
-        })();
-        util.ChannelCombiner = ChannelCombiner;
-    })(hang.util || (hang.util = {}));
-    var util = hang.util;
-})(hang || (hang = {}));
-var hang;
-(function (hang) {
     (function (wave) {
         var ConstantWave = (function () {
             function ConstantWave(value) {
@@ -716,46 +747,50 @@ var hang;
     })(hang.wave || (hang.wave = {}));
     var wave = hang.wave;
 })(hang || (hang = {}));
-var test2;
-(function (test2) {
+var test1;
+(function (test1) {
     var jquery = berek.jquery;
 
     var Main = (function () {
         function Main() {
-            this.length = 3;
-            this.levelMultipliers = [1, .9, .8, .7, .6, .4, .2, .2, .1, .1];
-            this.frequencies = [32.7032, 65.4064, 130.813, 261.626, 523.251, 1046.50, 2093.00, 4186.01, 8372, 16744];
             jquery.$(window).on('load', illa.bind(this.onDOMLoaded, this));
         }
         Main.prototype.onDOMLoaded = function () {
-            var sineWave = new hang.wave.SineWave();
+            this.test1Object = document.getElementById('test-1');
+            this.test1Document = this.test1Object.contentDocument;
+            this.freq1 = this.test1Document.getElementById('freq-1');
+            var bezierPath = hang.path.SVGPathConverter.convert(this.freq1.getAttribute('d'));
+            var linearPath = bezierPath.linearize(100);
 
-            var silence = new hang.sound.Sound(new hang.wave.ConstantWave(0), new hang.wave.ConstantWave(40), new hang.wave.ConstantWave(0), this.length).render();
+            var pathElement = this.test1Document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            this.freq1.parentNode.appendChild(pathElement);
+            pathElement.setAttribute('style', 'fill:none;stroke:green;stroke-width:1px;');
+            pathElement.setAttribute('d', hang.path.SVGPathConverter.linearPathToSvg(linearPath));
 
+            var pathWave = new hang.wave.PathWave(linearPath);
+
+            var wave1Bezier = hang.path.SVGPathConverter.convert(this.test1Document.getElementById('wave-1').getAttribute('d'));
+            var wave1Linear = wave1Bezier.linearize(100);
+            var wave1 = new hang.wave.PathWave(wave1Linear);
+
+            var levelWave = new hang.wave.ConstantWave(100);
+            var snd = new hang.sound.Sound(wave1, pathWave, levelWave, 5);
+
+            snd.render();
+            var data = snd.getOutput();
+            var normalizer = new hang.filter.NormalizeFilter(Math.round(32767 * .99));
             var riffWave = new RIFFWAVE();
-            riffWave.header.numChannels = 2;
             riffWave.header.sampleRate = 44100;
             riffWave.header.bitsPerSample = 16;
+            riffWave.Make(normalizer.filter(data));
 
-            for (var i = 0, n = this.frequencies.length; i < n; i++) {
-                var frequency = this.frequencies[i];
-                var freqWave = new hang.wave.ConstantWave(frequency);
-
-                var levelWave = new hang.wave.ConstantWave(32767 * this.levelMultipliers[i] * .5);
-
-                var sound = new hang.sound.Sound(sineWave, freqWave, levelWave, this.length).render();
-
-                var combined = hang.util.ChannelCombiner.combineStereo(sound, silence);
-                riffWave.Make(combined);
-                jquery.$('<p>' + frequency + ' left: <audio controls/></p>').appendTo('body').find('audio').attr('src', riffWave.dataURI);
-
-                combined = hang.util.ChannelCombiner.combineStereo(silence, sound);
-                riffWave.Make(combined);
-                jquery.$('<p>' + frequency + ' right: <audio controls/></p>').appendTo('body').find('audio').attr('src', riffWave.dataURI);
-            }
+            var audioElement = document.createElement('audio');
+            audioElement.src = riffWave.dataURI;
+            audioElement.controls = true;
+            document.body.insertBefore(audioElement, document.body.firstChild);
         };
         Main.instance = new Main();
         return Main;
     })();
-    test2.Main = Main;
-})(test2 || (test2 = {}));
+    test1.Main = Main;
+})(test1 || (test1 = {}));
